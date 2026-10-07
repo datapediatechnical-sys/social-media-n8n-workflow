@@ -1,0 +1,1222 @@
+{
+  "name": "insta",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2720,
+        -3536
+      ],
+      "id": "5774c27b-b03a-4133-bece-2ebe0ecbfc74",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "=",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1al6M20BkSUe1Yq4mM4qg2ScYsQ7fvdOq",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2384,
+        -3280
+      ],
+      "id": "9f9fdf06-a3f0-4712-8602-16712b79d896",
+      "name": "Search files and folders1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Get only media files\nconst media = items.filter(item => {\n  const name = item.json.name || '';\n  return /\\.(jpg|jpeg|png|mp4|mov)$/i.test(name);\n});\n\nif (media.length === 0) {\n  return [];\n}\n\n// Take only ONE media file per scheduler run\nconst selected = media[0];\n\nconst mediaName = selected.json.name;\n\n// Remove extension to get base name\nconst baseName = mediaName.replace(/\\.[^.]+$/, '');\n\n// Find TXT matching the SAME base name\nconst captionFile = items.find(item => {\n  const name = item.json.name || '';\n  return name.toLowerCase() === `${baseName}.txt`.toLowerCase();\n});\n\nreturn [{\n  json: {\n    id: selected.json.id,\n    name: selected.json.name,\n    captionFileId: captionFile?.json.id || null,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2176,
+        -3280
+      ],
+      "id": "0063fb5e-3200-4123-94e4-4bcb65660229",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1968,
+        -3280
+      ],
+      "id": "abe72699-ef9c-465e-a390-bf9d94a1555e",
+      "name": "Download file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cc64b68-be11-4745-94b7-e68fc40eaf30",
+              "leftValue": "={{ $json.captionFileId }}",
+              "rightValue": "txt",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1744,
+        -2832
+      ],
+      "id": "b99407b7-8c68-48a9-92b9-d538a1b00d05",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.captionFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1504,
+        -3120
+      ],
+      "id": "7f525656-c8b0-4a53-bd19-d49217bc4560",
+      "name": "Download file3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1264,
+        -3120
+      ],
+      "id": "59be2eef-c326-4068-a586-785023994737",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -928,
+        -3280
+      ],
+      "id": "ae840c89-67c9-4ce4-a725-935bcbd49f50",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file1').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1616,
+        -3584
+      ],
+      "id": "12f35f7d-5a0c-4716-8294-65bda40897cf",
+      "name": "Share file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c6adef7-8603-4a3a-9f34-2106fe70bc07",
+              "name": "caption",
+              "value": "data = \"\"",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -992,
+        -2848
+      ],
+      "id": "1ea4698a-1245-4b96-86f6-57cccc991c3c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "httpMethod": "POST",
+        "endpointPath": "/me/media",
+        "queryParamsJson": "={{\n  {\n    image_url: 'https://drive.google.com/uc?id=' + $('Code in JavaScript').item.json.id + '&export=download',\n    caption: $json.data || ''\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -3424
+      ],
+      "id": "866c880a-c786-4ce1-978a-141ef7286eb1",
+      "name": "Create Instagram Media Container2",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "endpointPath": "={{ '/' + $json.id }}",
+        "queryParamsJson": "={{\n  {\n    fields: 'status_code,status'\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -3440
+      ],
+      "id": "150e0d6b-fc3b-4ecc-9123-7ec33f3d0210",
+      "name": "status-check node.3",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "httpMethod": "POST",
+        "endpointPath": "/me/media_publish",
+        "queryParamsJson": "={{\n  {\n    creation_id: $json.id\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        848,
+        -3456
+      ],
+      "id": "6bd56296-52d7-4da7-9262-c22383e5816c",
+      "name": "Publish the container2",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "httpMethod": "POST",
+        "endpointPath": "/me/media",
+        "queryParamsJson": "={{\n  {\n    media_type: 'REELS',\n    video_url: 'https://drive.google.com/uc?id=' + $('Code in JavaScript').item.json.id + '&export=download',\n    caption: $json.data || '',\n    share_to_feed: true\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -2848
+      ],
+      "id": "193c4fcb-47df-4e8d-baa8-830cb089c5cd",
+      "name": "Create Instagram Media Container3",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "endpointPath": "={{ '/' + $json.id }}",
+        "queryParamsJson": "={{\n  {\n    fields: 'status_code,status'\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -2848
+      ],
+      "id": "f877db13-c868-4e54-b130-753677c091d3",
+      "name": "status-check node.4",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "custom",
+        "httpMethod": "POST",
+        "endpointPath": "/me/media_publish",
+        "queryParamsJson": "={{\n  {\n    creation_id: $json.id\n  }\n}}"
+      },
+      "type": "@rizkifirmansyah/n8n-nodes-instagram-api.instagram",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -2976
+      ],
+      "id": "4bf3100f-4c2c-4dfe-bd74-e1acebf4083d",
+      "name": "Publish the container3",
+      "credentials": {
+        "instagramApi": {
+          "id": "hxOmqPvJN6wwNrxd",
+          "name": "Instagram Access Token account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.fileExtension }}",
+                    "rightValue": "jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6c6e6991-72ca-441d-a017-0d4b9f78d2b9"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8faa2ccf-f729-4b70-ba62-0d6e8e899d97",
+                    "leftValue": "={{ $json.fileExtension }}",
+                    "rightValue": "=jpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ede7d630-37a8-43e5-af86-4084a9e6e64e",
+                    "leftValue": "={{ $json.fileExtension }}",
+                    "rightValue": " png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "565eba38-9090-4688-9c8e-cccf53e7ce2d",
+                    "leftValue": "={{ $json.fileExtension }}",
+                    "rightValue": "mp4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none",
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -3168
+      ],
+      "id": "f6ef0009-2ece-42eb-83a4-050a7b33a8c5",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cc64b68-be11-4745-94b7-e68fc40eaf30",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        -2912
+      ],
+      "id": "ec9228e6-bc0f-4ae5-b733-b1cc145f442b",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        -2608
+      ],
+      "id": "ba0e13a4-ef8a-4cb1-a3d2-ae31c9f26a94",
+      "name": "Wait1",
+      "webhookId": "4e6fe663-06cb-4719-9fba-cdf659496e3c"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file1').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1312,
+        -3584
+      ],
+      "id": "f1390c4c-8d00-42c0-aefc-b906fca8afb4",
+      "name": "Download file4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0409a558-5049-44f6-a125-0a94876186a2",
+              "name": "fileExtension",
+              "value": "={{ $('Code in JavaScript').item.json.name.split('.').pop().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -592,
+        -3136
+      ],
+      "id": "9f354466-0030-42ef-aa05-d8f4f492b390",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript').item.json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ZJ04RtuFfeQshG5jzo1BbCS7MexLrnOs",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1552,
+        -2960
+      ],
+      "id": "5ab0a9c5-a234-4caa-8128-6c7c5ea40b0d",
+      "name": "Move text file to insta error",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ZJ04RtuFfeQshG5jzo1BbCS7MexLrnOs",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1536,
+        -3216
+      ],
+      "id": "bab73023-82a9-4aaa-8652-00a59009da3b",
+      "name": "Move post file to innsta error",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript').item.json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Dh0QUR2ristesSGUpF24-0rdto_O-tUU",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        -3472
+      ],
+      "id": "0052b007-c465-4f94-b6f2-3ee8665b3c2a",
+      "name": "Move text file to insta publish",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Dh0QUR2ristesSGUpF24-0rdto_O-tUU",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1504,
+        -3728
+      ],
+      "id": "0400f9ff-8c30-40c1-a957-61f6385e3283",
+      "name": "Move post file to insta publish",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file1').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1488,
+        -2848
+      ],
+      "id": "323d305b-f082-4ec9-83c2-144baf0bfa4c",
+      "name": "Share file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file1').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1264,
+        -2848
+      ],
+      "id": "aaca56c7-c0bb-4a0c-af99-e9dacfb4859c",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cc64b68-be11-4745-94b7-e68fc40eaf30",
+              "leftValue": "={{ $json.status_code }}",
+              "rightValue": "FINISHED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        -3440
+      ],
+      "id": "9d9325c9-9187-4fa8-9507-3f8902b9ffe6",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -3200
+      ],
+      "id": "387c1adc-396c-4c87-bf21-353259f9e4fe",
+      "name": "Wait",
+      "webhookId": "4e6fe663-06cb-4719-9fba-cdf659496e3c"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2688,
+        -3280
+      ],
+      "id": "78e377e1-ac72-4e6b-9e82-e954ab0a25fc",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "replace the when executed by another workflow with scheduler trigger to run only insta workflow"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2336,
+        -3744
+      ],
+      "typeVersion": 1,
+      "id": "f28e5dce-5822-4c4f-9225-60e84acbb563",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search files and folders1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Download file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file1": {
+      "main": [
+        [
+          {
+            "node": "Share file1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Download file3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Share file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file3": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Share file1": {
+      "main": [
+        [
+          {
+            "node": "Download file4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Instagram Media Container2": {
+      "main": [
+        [
+          {
+            "node": "status-check node.3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status-check node.3": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Instagram Media Container3": {
+      "main": [
+        [
+          {
+            "node": "status-check node.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status-check node.4": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "Create Instagram Media Container2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Instagram Media Container2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Instagram Media Container2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Instagram Media Container3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Publish the container3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "status-check node.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        []
+      ]
+    },
+    "Download file4": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish the container2": {
+      "main": [
+        [
+          {
+            "node": "Move post file to insta publish",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to insta publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move post file to innsta error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to insta error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish the container3": {
+      "main": [
+        [
+          {
+            "node": "Move post file to insta publish",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to insta publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move post file to innsta error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to insta error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Publish the container2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "status-check node.3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b2fc2b54-b7ff-4811-960b-1c80c3dedb71",
+  "meta": {
+    "instanceId": "6578a0dec37172974f804fafdefa23376c2313249fe2828ce9dfb0c059a88b70"
+  },
+  "nodeGroups": [],
+  "id": "NwrO0SowCiWOzqk2",
+  "tags": []
+}
