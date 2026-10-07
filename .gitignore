@@ -147,3 +147,29 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Credentials / secrets
+credentials.json
+secrets.json
+
+# n8n local data
+.n8n/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
