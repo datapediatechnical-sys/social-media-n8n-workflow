@@ -1,0 +1,790 @@
+{
+  "name": "youtube",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1936,
+        3040
+      ],
+      "id": "2bd86259-4a58-4066-a003-a931898e2109",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "=",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1JJBC0HldNV3JOgwQnK5BdUGqgqnEGt1P",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2000,
+        3376
+      ],
+      "id": "9d03b0ab-0c35-4ff4-a730-0b03508a93e7",
+      "name": "Search files and folders2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst mediaExtensions = /\\.(jpg|jpeg|png|mp4|mov)$/i;\nconst txtExtension = /\\.txt$/i;\n\n// Find media files\nconst media = items.filter(item =>\n  mediaExtensions.test(item.json.name || '')\n);\n\n// If media exists, select the first media file\nif (media.length > 0) {\n  const selected = media[0];\n  const mediaName = selected.json.name;\n  const baseName = mediaName.replace(/\\.[^.]+$/, '');\n\n  // Find matching caption\n  const captionFile = items.find(item => {\n    const name = item.json.name || '';\n    return name.toLowerCase() === `${baseName}.txt`.toLowerCase();\n  });\n\n  return [{\n    json: {\n      id: selected.json.id,\n      name: selected.json.name,\n      captionFileId: captionFile?.json.id || null,\n      postType: 'media'\n    }\n  }];\n}\n\n// No media → check for text-only post\nconst txtFile = items.find(item =>\n  txtExtension.test(item.json.name || '')\n);\n\nif (txtFile) {\n  return [{\n    json: {\n      id: txtFile.json.id,\n      name: txtFile.json.name,\n      captionFileId: null,\n      postType: 'text'\n    }\n  }];\n}\n\n// Nothing to post\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        3376
+      ],
+      "id": "a43558b3-eac5-4cbc-a6cd-4282f0931c59",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1456,
+        3376
+      ],
+      "id": "562adb95-9ad3-4d91-b563-b2cea43b1dea",
+      "name": "Download file6",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cc64b68-be11-4745-94b7-e68fc40eaf30",
+              "leftValue": "={{ $json.captionFileId }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1600,
+        4048
+      ],
+      "id": "def75969-c465-454e-a047-1047163baf73",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.captionFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -672,
+        3440
+      ],
+      "id": "968a81ea-3c68-45e7-ba85-9f09e28d995c",
+      "name": "Download file7",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        3456
+      ],
+      "id": "e4897134-d97b-4479-ac06-0c76e3a16cba",
+      "name": "Extract from File3"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -736,
+        3056
+      ],
+      "id": "177c09f8-7223-434f-83e2-408a76bf275b",
+      "name": "Share file3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -432,
+        3056
+      ],
+      "id": "f83479f8-d648-4114-b7a0-16d4b447b603",
+      "name": "Download file8",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -608,
+        3792
+      ],
+      "id": "3f735639-ac17-4047-88cb-b609fd7ed3e3",
+      "name": "Share file4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        3792
+      ],
+      "id": "0c76bdc4-2ec2-4a26-9259-f996fdb3c273",
+      "name": "Download file9",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -64,
+        3232
+      ],
+      "id": "d57f9fee-5003-436e-801d-e2d16dbab5f5",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $json.title }}",
+        "regionCode": "IN",
+        "categoryId": "=22",
+        "options": {
+          "description": "={{ $('Extract from File3').first().json.data }}",
+          "privacyStatus": "public"
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        736,
+        3568
+      ],
+      "id": "94888833-edff-4305-aa47-5f62c9db0ff1",
+      "name": "Upload a video",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "7OaovNTSFCscXp6k",
+          "name": "YouTube account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.data || '';\n\n\n\nconst titleMatch = text.match(/^TITLE:\\s*(.+)$/m);\n\nconst descriptionMatch = text.match(/^DESCRIPTION:\\s*([\\s\\S]*)$/m);\n\n\n\nreturn [{\n\n  json: {\n\n    ...$json,\n\n    title: titleMatch ? titleMatch[1].trim() : '',\n\n    data: descriptionMatch ? descriptionMatch[1].trim() : ''\n\n  }\n\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        3488
+      ],
+      "id": "03f61ffb-3201-4cd0-9491-1411a21140d1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a26251ea-645e-477a-99a9-7d193e126793",
+              "name": "youtubeTitle",
+              "value": "={{ $('Code in JavaScript').first().json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "0291e0fe-d1d8-48a1-a8c8-3e604e5bae44",
+              "name": "youtubeDescription",
+              "value": "={{ $('Code in JavaScript').first().json.data || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        160,
+        3392
+      ],
+      "id": "2c6f92f7-2ede-4664-bb72-3b738ca97973",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fileName = $binary.data.fileName || '';\n\n// Get the text extracted from the TXT file\nconst text = $json.data || '';\n\nconst title = fileName.replace(/\\.[^/.]+$/, '').trim();\n\nreturn [{\n  json: {\n    title: title,\n    description: text.trim()\n  },\n  binary: $binary\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        3168
+      ],
+      "id": "72c1af1c-fb01-4140-86c0-6858e93e034d",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "update",
+        "videoId": "={{ $('Upload a video').first().json.id }}",
+        "title": "={{ $('Code in JavaScript').first().json.title }}",
+        "regionCode": "IN",
+        "categoryId": "=22",
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        704,
+        3152
+      ],
+      "id": "c3e75464-82d0-44eb-9a6f-92c77d2c853a",
+      "name": "Update a video",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "7OaovNTSFCscXp6k",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1eltZ1Xziwmg5Ojh9DqQ-HqAkI-XvsqK0",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        3936
+      ],
+      "id": "0c8bb486-176c-4160-8087-0e333b61eb63",
+      "name": "Move text file to yt error1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1eltZ1Xziwmg5Ojh9DqQ-HqAkI-XvsqK0",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        3712
+      ],
+      "id": "967ae921-0599-481a-8ec9-6adadb369b46",
+      "name": "Move post file to yt error1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1XNyUlNBjVsbM_UaaKtbmSmc8f6Mq8RSE",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        3504
+      ],
+      "id": "609eeb22-ecb0-49f8-9194-c28ad1997356",
+      "name": "Move text file to yt publish1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1XNyUlNBjVsbM_UaaKtbmSmc8f6Mq8RSE",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1248,
+        3280
+      ],
+      "id": "ff5c763f-38e2-4251-b9dc-04c1fefc8281",
+      "name": "Move post file to yt publish1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2304,
+        3376
+      ],
+      "id": "5b3642f7-3193-402f-9414-f1abb7a800b1",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "replace the when executed by another workflow with scheduler trigger to run only insta workflow"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1584,
+        3024
+      ],
+      "typeVersion": 1,
+      "id": "79c647d2-ec02-42d8-9042-41c6086acb39",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        []
+      ]
+    },
+    "Search files and folders2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Download file6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file6": {
+      "main": [
+        [
+          {
+            "node": "Share file3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "Download file7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Share file4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file7": {
+      "main": [
+        [
+          {
+            "node": "Extract from File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file3": {
+      "main": [
+        [
+          {
+            "node": "Download file8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file8": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file4": {
+      "main": [
+        [
+          {
+            "node": "Download file9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file9": {
+      "main": [
+        [
+          {
+            "node": "Upload a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Upload a video": {
+      "main": [
+        [
+          {
+            "node": "Move post file to yt publish1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to yt publish1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move post file to yt error1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to yt error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Upload a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "55f782b7-789b-4ee7-9f7f-a9595aaf2ac7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6578a0dec37172974f804fafdefa23376c2313249fe2828ce9dfb0c059a88b70"
+  },
+  "nodeGroups": [],
+  "id": "xBKNubfur8y5jKSo",
+  "tags": []
+}

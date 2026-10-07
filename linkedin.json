@@ -1,0 +1,1402 @@
+{
+  "name": "linkedin",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -4928,
+        2240
+      ],
+      "id": "bc2422fc-60e8-494f-916e-f5fa97e0782d",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "=",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1WJ0ks1mUMdWVL6GfoRAmVnG1kstBUvfa",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -4784,
+        2480
+      ],
+      "id": "17778e4d-e5f0-4018-b474-d9d6646e5525",
+      "name": "Search files and folders2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst mediaExtensions = /\\.(jpg|jpeg|png|mp4|mov)$/i;\nconst txtExtension = /\\.txt$/i;\n\n// Find media files\nconst media = items.filter(item =>\n  mediaExtensions.test(item.json.name || '')\n);\n\n// If media exists, select the first media file\nif (media.length > 0) {\n  const selected = media[0];\n  const mediaName = selected.json.name;\n  const baseName = mediaName.replace(/\\.[^.]+$/, '');\n\n  // Find matching caption\n  const captionFile = items.find(item => {\n    const name = item.json.name || '';\n    return name.toLowerCase() === `${baseName}.txt`.toLowerCase();\n  });\n\n  return [{\n    json: {\n      id: selected.json.id,\n      name: selected.json.name,\n      captionFileId: captionFile?.json.id || null,\n      postType: 'media'\n    }\n  }];\n}\n\n// No media → check for text-only post\nconst txtFile = items.find(item =>\n  txtExtension.test(item.json.name || '')\n);\n\nif (txtFile) {\n  return [{\n    json: {\n      id: txtFile.json.id,\n      name: txtFile.json.name,\n      captionFileId: null,\n      postType: 'text'\n    }\n  }];\n}\n\n// Nothing to post\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4592,
+        2480
+      ],
+      "id": "6b70ef1c-c6f1-41e1-91e0-cf0be4314df0",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -4240,
+        2480
+      ],
+      "id": "fdc7db9a-256a-4fc5-b8f3-1c85256866a1",
+      "name": "Download file6",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5cc64b68-be11-4745-94b7-e68fc40eaf30",
+              "leftValue": "={{ $json.captionFileId }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4384,
+        3152
+      ],
+      "id": "65a9088c-0a29-4637-809b-1b31ff621a25",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.captionFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3456,
+        2688
+      ],
+      "id": "2d4b7111-3b67-49fe-9748-72f554ae1adf",
+      "name": "Download file7",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -3200,
+        2416
+      ],
+      "id": "ee5de41b-b2f2-4e09-a723-f5c5d0ae65d6",
+      "name": "Extract from File3"
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3536,
+        2016
+      ],
+      "id": "0c130160-5bfc-4e22-bc8d-5a9c93d7be9f",
+      "name": "Share file3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3232,
+        2016
+      ],
+      "id": "2de70c06-87d7-4733-af68-248b283a4129",
+      "name": "Download file8",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3392,
+        2896
+      ],
+      "id": "34ac1c68-5c92-4206-9729-8bc48fb16939",
+      "name": "Share file4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Download file6').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3168,
+        2896
+      ],
+      "id": "0ca55280-df4b-4a50-bb96-2cba46968da3",
+      "name": "Download file9",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "image/jpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4fbe01f4-e693-4cc0-bb9b-a6d38b94a472"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "74e53228-9feb-4c3f-a3f2-95f646088a1d",
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "image/png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6019dfe1-e924-463c-bfe1-afed646a3cbc",
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "image/jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "05c61fff-47c3-4350-9797-268c0b7d9865",
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "video/mp4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e8bed7b4-c1eb-475e-b543-1238f2296316",
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "video/quicktime",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9354df7e-afbb-42af-8072-3b0b1b717eb7",
+                    "leftValue": "={{ $binary.data.mimeType }}",
+                    "rightValue": "text/plain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2496,
+        2384
+      ],
+      "id": "1566f04c-58e0-4015-9671-711fa89cec67",
+      "name": "Switch2"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -2544,
+        2928
+      ],
+      "id": "04a18652-6d30-46c3-990a-afa98e39fba4",
+      "name": "Extract from File4"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1tzJaQmbiOzyE5UzLnRcNBCjMWNMbrVq9",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -704,
+        2944
+      ],
+      "id": "53e3968b-c4d5-48ef-87b8-db77d0101771",
+      "name": "Move text file to fb error1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1tzJaQmbiOzyE5UzLnRcNBCjMWNMbrVq9",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -704,
+        2688
+      ],
+      "id": "c95deb88-c415-4f8f-828b-5781b012dcdf",
+      "name": "Move post file to fb error1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.captionFileId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1mIllLqDAsO30Hp9uO8XGnZn1FFH89FDZ",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -720,
+        2464
+      ],
+      "id": "4b102faa-e676-4b88-952d-afbba38695e7",
+      "name": "Move text file to fb publish1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1mIllLqDAsO30Hp9uO8XGnZn1FFH89FDZ",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -720,
+        2256
+      ],
+      "id": "90787399-783c-40ff-8bb5-6801db841773",
+      "name": "Move post  file to fb publish1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a21fec62-d302-49b2-b4e3-8c25bbc0db72",
+              "name": "fileId",
+              "value": "={{ $('Code in JavaScript1').first().json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -2224,
+        2960
+      ],
+      "id": "4696b2b2-677a-46b1-b9b3-e080cbdd4fb3",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1mIllLqDAsO30Hp9uO8XGnZn1FFH89FDZ",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1488,
+        3200
+      ],
+      "id": "2b343d18-6b1b-47cd-8215-e4c4607c48dc",
+      "name": "Move text file to fb publish2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Code in JavaScript1').first().json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1tzJaQmbiOzyE5UzLnRcNBCjMWNMbrVq9",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1472,
+        3456
+      ],
+      "id": "f46d33ae-2810-4c47-959d-74a66988541e",
+      "name": "Move text file to fb error2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "IQFemM2dIPhuJFS9",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2848,
+        2336
+      ],
+      "id": "7ea80604-0b99-4e66-bd2d-db534e6b6e60",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "person": "=sCrJ3-Cjwy",
+        "text": "={{ $json.data }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -1904,
+        3280
+      ],
+      "id": "2a1a21f4-7e03-441d-998e-ffdc70f38208",
+      "name": "Create a post for text ",
+      "retryOnFail": false,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "H1PfMh4KwIVYV8iT",
+          "name": "LinkedIn account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "person": "=sCrJ3-Cjwy",
+        "text": "={{ $json.data || '' }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -1904,
+        2224
+      ],
+      "id": "9830b3d9-c3c4-4f14-ac12-1b5369cd5174",
+      "name": "Create a post photo",
+      "retryOnFail": false,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "H1PfMh4KwIVYV8iT",
+          "name": "LinkedIn account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/videos?action=initializeUpload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "202601"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    initializeUploadRequest: {\n      owner: \"urn:li:person:sCrJ3-Cjwy\",\n      fileSizeBytes: (() => {\n        const s = String($binary.data.fileSize);\n        const m = s.match(/^([\\d.]+)\\s*(B|KB|MB|GB)$/i);\n\n        if (!m) return Number(s);\n\n        const n = Number(m[1]);\n        const unit = m[2].toUpperCase();\n\n        const multiplier = {\n          B: 1,\n          KB: 1024,\n          MB: 1024 ** 2,\n          GB: 1024 ** 3\n        };\n\n        return Math.round(n * multiplier[unit]);\n      })(),\n      uploadCaptions: false,\n      uploadThumbnail: false\n    }\n  }\n}}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -2096,
+        2480
+      ],
+      "id": "d8db51a5-f892-458a-b1c6-bc1e81d1cb7a",
+      "name": "Photo Initialize Upload1",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "nI8LuYuGbXWiwwPy",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $json.uploadUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            },
+            {
+              "name": "Content-Range",
+              "value": "=bytes {{ $json.firstByte }}-{{ $json.lastByte }}/{{ $json.totalBytes }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1840,
+        2768
+      ],
+      "id": "dc63a209-f75d-4552-bd30-dbc8cc76d0ab",
+      "name": "Photo Upload1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2096,
+        2688
+      ],
+      "id": "c900aee0-d800-4bfa-a6b7-b0635ec71a5e",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nconst buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n\nconst instructions =\n  $('Photo Initialize Upload1').first().json.body.value.uploadInstructions;\n\nconst output = [];\n\nfor (let i = 0; i < instructions.length; i++) {\n  const instruction = instructions[i];\n\n  const chunk = buffer.subarray(\n    instruction.firstByte,\n    instruction.lastByte + 1\n  );\n\n  output.push({\n    json: {\n      chunkIndex: i,\n      firstByte: instruction.firstByte,\n      lastByte: instruction.lastByte,\n      totalBytes: buffer.length,\n      uploadUrl: instruction.uploadUrl\n    },\n    binary: {\n      data: await this.helpers.prepareBinaryData(\n        chunk,\n        item.binary.data.fileName,\n        item.binary.data.mimeType\n      )\n    }\n  });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        2496
+      ],
+      "id": "6f128744-21b3-4f6b-8164-a08f1040b7cf",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/videos?action=finalizeUpload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "202601"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    finalizeUploadRequest: {\n      video: $('Photo Initialize Upload1').first().json.body.value.video,\n      uploadToken: $('Photo Initialize Upload1').first().json.body.value.uploadToken,\n      uploadedPartIds: $('Photo Upload1').all().map(item => item.json.headers.etag)\n    }\n  }\n}}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1504,
+        2768
+      ],
+      "id": "e9757afb-e26f-4c35-b450-f8856db121cd",
+      "name": "LinkedIn Upload2",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "nI8LuYuGbXWiwwPy",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.linkedin.com/v2/userinfo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "202601"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"author\": \"urn:li:person:YOUR_PERSON_ID\",\n  \"commentary\": \"Test post from n8n 🚀\",\n  \"visibility\": \"PUBLIC\",\n  \"distribution\": {\n    \"feedDistribution\": \"MAIN_FEED\",\n    \"targetEntities\": [],\n    \"thirdPartyDistributionChannels\": []\n  },\n  \"lifecycleState\": \"PUBLISHED\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1600,
+        1872
+      ],
+      "id": "80ac7616-6178-4647-9a16-7a3cd1a0dc5c",
+      "name": "to get owner id ",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "nI8LuYuGbXWiwwPy",
+          "name": "Unnamed credential"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Linkedin-Version",
+              "value": "202601"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    author: \"urn:li:person:sCrJ3-Cjwy\",\n    commentary: $('Extract from File3').first().json.data || \"\",\n    visibility: \"PUBLIC\",\n    distribution: {\n      feedDistribution: \"MAIN_FEED\",\n      targetEntities: [],\n      thirdPartyDistributionChannels: []\n    },\n    content: {\n      media: {\n        id: $('Photo Initialize Upload1').first().json.body.value.video\n      }\n    },\n    lifecycleState: \"PUBLISHED\"\n  }\n}}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1232,
+        2784
+      ],
+      "id": "44e39d02-70da-4ee4-8af1-0672481c1007",
+      "name": "LinkedIn Upload3",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "nI8LuYuGbXWiwwPy",
+          "name": "Unnamed credential"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      video: $('Photo Initialize Upload1').first().json.body.value.video\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1248,
+        2512
+      ],
+      "id": "f3d22885-472e-4af0-bdf5-45dfed83ee54",
+      "name": "LinkedIn Video Finalized"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -5056,
+        2496
+      ],
+      "id": "a8fca90e-fdcf-403e-ba39-031a969b52bd",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "replace the when executed by another workflow with scheduler trigger to run only insta workflow"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4704,
+        1936
+      ],
+      "typeVersion": 1,
+      "id": "413808fb-f62a-4938-a27e-c35990103ec3",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        []
+      ]
+    },
+    "Search files and folders2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Download file6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file6": {
+      "main": [
+        [
+          {
+            "node": "Share file3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "Download file7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Share file4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file7": {
+      "main": [
+        [
+          {
+            "node": "Extract from File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File3": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Share file3": {
+      "main": [
+        [
+          {
+            "node": "Download file8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file8": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file4": {
+      "main": [
+        [
+          {
+            "node": "Download file9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file9": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch2": {
+      "main": [
+        [
+          {
+            "node": "Create a post photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a post photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a post photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Photo Initialize Upload1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Photo Initialize Upload1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Create a post for text ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Switch2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post for text ": {
+      "main": [
+        [
+          {
+            "node": "Move text file to fb publish2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move text file to fb error2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post photo": {
+      "main": [
+        [
+          {
+            "node": "Move post  file to fb publish1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to fb publish1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Photo Initialize Upload1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photo Upload1": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Upload2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Photo Upload1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "to get owner id ": {
+      "main": [
+        []
+      ]
+    },
+    "LinkedIn Upload2": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Video Finalized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Upload3": {
+      "main": [
+        [
+          {
+            "node": "Move post  file to fb publish1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to fb publish1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move post file to fb error1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move text file to fb error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Video Finalized": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Upload3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "33607f0c-551a-43b5-a5c8-c8754fb8306e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6578a0dec37172974f804fafdefa23376c2313249fe2828ce9dfb0c059a88b70"
+  },
+  "nodeGroups": [],
+  "id": "wJNZ3mumYW0tYU45",
+  "tags": []
+}

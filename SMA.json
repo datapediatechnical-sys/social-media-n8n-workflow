@@ -1,0 +1,340 @@
+{
+  "name": "SMA",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2800,
+        2720
+      ],
+      "id": "8af02286-ecf5-43d0-8ff5-992703f42c26",
+      "name": "Schedule Trigger3"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "NwrO0SowCiWOzqk2",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/NwrO0SowCiWOzqk2",
+          "cachedResultName": "insta"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -1968,
+        2384
+      ],
+      "id": "56908d31-a609-4729-94f8-32fbcd28944e",
+      "name": "Call 'insta'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "HzFkpGL6KAcVQb0Y",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/HzFkpGL6KAcVQb0Y",
+          "cachedResultName": "facebook"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -1968,
+        2592
+      ],
+      "id": "150691b8-f9ad-4d9c-82e2-3d0d4c615c20",
+      "name": "Call 'facebook'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "wJNZ3mumYW0tYU45",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/wJNZ3mumYW0tYU45",
+          "cachedResultName": "linkedin"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -1952,
+        2832
+      ],
+      "id": "7f4e574b-7af2-4455-ade4-85185406472f",
+      "name": "Call 'linkedin'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "xBKNubfur8y5jKSo",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/xBKNubfur8y5jKSo",
+          "cachedResultName": "youtube"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -1936,
+        3056
+      ],
+      "id": "837504e3-2ab6-4918-9d73-62f2090427cd",
+      "name": "Call 'youtube'"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst now = new Date();\n\nconst parts = new Intl.DateTimeFormat('en-GB', {\n  timeZone: 'Asia/Kolkata',\n  hour: '2-digit',\n  minute: '2-digit',\n  hourCycle: 'h23'\n}).formatToParts(now);\n\nconst hour = Number(parts.find(p => p.type === 'hour').value);\nconst minute = Number(parts.find(p => p.type === 'minute').value);\n\nconst schedule = {\n  9: 'instagram',\n  12: 'facebook',\n  18: 'linkedin',\n  21: 'youtube'\n};\n\nif (minute === 0 && schedule[hour]) {\n  return [{ json: { platform: schedule[hour] } }];\n}\n\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2560,
+        2736
+      ],
+      "id": "4097c866-552f-4b42-b646-7d2628eedcf7",
+      "name": "Code in JavaScript7"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5d571d44-b91e-4c17-8e56-779d7d2d9958"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ab8690c9-7cc1-4ca6-b233-70c62c650ab9",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "facebook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ba3370b3-fcce-4bdf-8d4e-883482797e75",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "linkedin",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "75deb3b7-5cb3-41c6-8d9e-348f6aaf3134",
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": " youtube",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2272,
+        2720
+      ],
+      "id": "9d09bbbf-c55b-49d2-92cc-7e9c68567508",
+      "name": "Switch1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'insta'": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript7": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Call 'insta'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'facebook'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'linkedin'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'youtube'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "28583d1d-4f84-46f9-9c67-5ed8f16150e7",
+  "meta": {
+    "instanceId": "6578a0dec37172974f804fafdefa23376c2313249fe2828ce9dfb0c059a88b70"
+  },
+  "nodeGroups": [],
+  "id": "mW2SARnXM9RkdXgN",
+  "tags": []
+}
